@@ -199,14 +199,14 @@ def JacF(x):
 #===== main program begins from here =====
 time_start = time()
 
-K      = 100
+K      = 10
 n      = 6
 #== Level  1     2     3     4     5      6  ==
 maxits = [200,  300,  400,  500,  600,   1500 ]
 fctols = [1E-3, 1E-5, 1E-7, 1E-9, 1E-11, 1E-13]
-numlvl = 4
+numlvl = 3
 USE_GLOBAL_MIN = True # False
-numhop = 20000
+numhop = 10
 
 # give an initial guess
 np.random.seed(234567891)
@@ -265,7 +265,7 @@ print( '--------------------------------------------------------------' )
 if USE_GLOBAL_MIN:
     x0 = sol
     minkwargs = {"method":"L-BFGS-B", "jac":JacF}
-    res = basinhopping(F, x0, niter=numhop, T=30, minimizer_kwargs=minkwargs)
+    res = basinhopping(F, x0, niter=numhop, T=0.2, minimizer_kwargs=minkwargs)
     sol = res.x
     a   = sol[0:n]
     b   = sol[n:2*n]

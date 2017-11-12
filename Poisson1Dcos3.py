@@ -189,8 +189,8 @@ n      = 6
 #== Level  1     2     3     4     5      6  ==
 maxits = [200,  300,  400,  500,  600,   1500 ]
 fctols = [1E-3, 1E-5, 1E-7, 1E-9, 1E-11, 1E-13]
-numlvl = 6
-USE_GLOBAL_MIN = False # True # False
+numlvl = 3
+USE_GLOBAL_MIN = True # False
 numhop = 10
 
 # give an initial guess

@@ -164,6 +164,53 @@ def JacF(x):
 
     return jac
 
+# define stochastic Jacobian of energy function:
+def JacF_rand(x):
+    def d2ReLU(x):
+        return 6*x * (x > 0)
+    a = x[0:n]
+    b = x[n:2*n]
+    d = x[2*n:3*n]
+    jac = np.zeros(len(x))
+
+    alpha  = 0.001
+    nquad  = 100
+    tquad  = (np.random.random(nquad)-0.5)*2
+    yquad1 = np.zeros(nquad)
+    yquad2 = np.zeros(nquad)
+    yquad3 = np.zeros(nquad)
+
+    # prepare some sums on quadrature points
+    s1     = np.zeros(nquad)
+    s2     = np.zeros(nquad)
+    for j in range(n):
+        s1 += a[j] * d[j] * dReLU(a[j]*tquad+b[j])
+        s2 +=        d[j] *  ReLU(a[j]*tquad+b[j])
+
+    # compute partial derivatives for a, c and d
+    for i in range(n):
+        yquad1 =   s1 * (         d[i] *  dReLU(a[i]*tquad+b[i]) \
+                         + a[i] * d[i] * d2ReLU(a[i]*tquad+b[i]) * tquad ) \
+                 + s2           * d[i] *  dReLU(a[i]*tquad+b[i]) * tquad \
+                 - f(tquad)     * d[i] *  dReLU(a[i]*tquad+b[i]) * tquad
+        yquad2 =   s1 *    a[i] * d[i] * d2ReLU(a[i]*tquad+b[i]) \
+                 + s2           * d[i] *  dReLU(a[i]*tquad+b[i]) \
+                 - f(tquad)     * d[i] *  dReLU(a[i]*tquad+b[i])
+        yquad3 =   s1 *    a[i]        *  dReLU(a[i]*tquad+b[i]) \
+                 + s2                  *   ReLU(a[i]*tquad+b[i]) \
+                 - f(tquad)            *   ReLU(a[i]*tquad+b[i])
+        jac[    i] = np.sum(yquad1)/nquad
+        jac[  n+i] = np.sum(yquad2)/nquad
+        jac[2*n+i] = np.sum(yquad3)/nquad
+
+    return jac * alpha
+
+# give a simple gradient descent method
+def GradientDescent(x, numIterations):
+    for i in range(numIterations):
+        x -= JacF_rand(x)
+    return x
+
 #===== main program begins from here =====
 time_start = time()
 
@@ -171,36 +218,35 @@ K      = 10
 n      = 6
 #== Level  1     2     3     4     5      6  ==
 maxits = [200,  300,  400,  500,  600,   1500 ]
-maxits = [  0,    0,    0,    0,    0,      0 ] # skip local min
 fctols = [1E-3, 1E-5, 1E-7, 1E-9, 1E-11, 1E-13]
 numlvl = 4
-USE_GLOBAL_MIN = True # False
+nit    = 10000
 numhop = 100
+USE_GLOBAL_MIN = True # False
 
 # give an initial guess
 np.random.seed(234567891)
 x0 = (np.random.random(3*n)-0.5)*2
 
-print( 'K =', K, ', n =', n*2**(numlvl-1), ', relu3')
+print( 'K =', K, ', n =', n*2**(numlvl-1), ', relu3, SGD')
 print( 'Exact energy:', exact_energy() )
 print( 'Initial energy:', F(x0) )
 print( '--------------------------------------------------------------' )
 
-format_min = "Success = %d, F(u) = %10.5e, Niter = %d, Nfeval = %d"
+format_min = "Objective F(u) = %10.5e, Niter = %d, Nfeval = %d"
 format_err = "n = %3d, L2err = %12.7e, H1err = %12.7e"
 
 # call a multi-level minimization process
 for l in range(numlvl-1):
     # call a minimizer to find a global min
     opt = {'ftol':fctols[l], 'maxiter':maxits[l]}
-    res = minimize(F, x0, method='SLSQP', jac=JacF, options=opt)
-    sol = res.x
+    sol = GradientDescent(x0, nit)
     a   = sol[0:n]
     b   = sol[n:2*n]
     d   = sol[2*n:3*n]
 
     # output solution state and error
-    print( format_min % (res.success, res.fun, res.nit, res.nfev)  )
+    print( format_min % (F(sol), nit, nit) )
     print( format_err % (n, L2err(a,b,d), H1err(a,b,d)) )
     print( '--------------------------------------------------------------' )
 
@@ -212,19 +258,18 @@ for l in range(numlvl-1):
     x0[n2:n2+n]     = sol[n:2*n]                  # b old
     x0[n2+n:2*n2]   = (np.random.random(n)-0.5)*2 # b new
     x0[n2*2:n2*2+n] = sol[2*n:3*n]                # d old
-    x0[n2*2+n:]     = (np.random.random(n)-0.5)*2 # d new
+    #x0[n2*2+n:]     = (np.random.random(n)-0.5)*2 # d new
     n = n2
 
 # call a minimizer to find a global min for the finest level
 opt = {'ftol':fctols[numlvl-1], 'maxiter':maxits[numlvl-1]}
-res = minimize(F, x0, method='SLSQP', jac=JacF, options=opt)
-sol = res.x
+sol = GradientDescent(x0, nit)
 a   = sol[0:n]
 b   = sol[n:2*n]
 d   = sol[2*n:3*n]
 
 # output final solution state and error
-print( format_min % (res.success, res.fun, res.nit, res.nfev)  )
+print( format_min % (F(sol), nit, nit) )
 print( format_err % (n, L2err(a,b,d), H1err(a,b,d)) )
 print( '--------------------------------------------------------------' )
 
@@ -232,14 +277,13 @@ print( '--------------------------------------------------------------' )
 if USE_GLOBAL_MIN:
     x0 = sol
     minkwargs = {"method":"L-BFGS-B", "jac":JacF}
-    res = basinhopping(F, x0, niter=numhop, T=30, minimizer_kwargs=minkwargs)
+    res = basinhopping(F, x0, niter=numhop, T=10, minimizer_kwargs=minkwargs)
     sol = res.x
     a   = sol[0:n]
     b   = sol[n:2*n]
     d   = sol[2*n:3*n]
 
     # output solution state and error after global optimization
-    format_min = "Objective F(u) = %10.5e, Niter = %d, Nfeval = %d"
     print( res.message[0] )
     print( format_min % (res.fun, res.nit, res.nfev)  )
     print( format_err % (n, L2err(a,b,d), H1err(a,b,d)) )
@@ -257,4 +301,3 @@ plt.plot(tpt,ypt,'k')
 plt.title( 'n = ' + str(n) + ', final energy = ' + str(F(sol)) )
 plt.show()
 #np.save('data_abd.npy', sol)
-

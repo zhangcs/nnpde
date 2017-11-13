@@ -3,6 +3,7 @@
 """
     Solve the 1D perturbed Poisson's equation
     using Neural Network with activation function ReLU(x)
+    stochastic gradient descent
 """
 
 from time import time
@@ -238,7 +239,7 @@ format_err = "n = %3d, L2err = %12.7e, H1err = %12.7e"
 
 # call a multi-level minimization process
 for l in range(numlvl-1):
-    # call a minimizer to find a global min
+    # call a minimizer to find a local min
     opt = {'ftol':fctols[l], 'maxiter':maxits[l]}
     sol = GradientDescent(x0, nit)
     a   = sol[0:n]
@@ -261,7 +262,7 @@ for l in range(numlvl-1):
     #x0[n2*2+n:]     = (np.random.random(n)-0.5)*2 # d new
     n = n2
 
-# call a minimizer to find a global min for the finest level
+# call a minimizer to find a local min on the finest level
 opt = {'ftol':fctols[numlvl-1], 'maxiter':maxits[numlvl-1]}
 sol = GradientDescent(x0, nit)
 a   = sol[0:n]

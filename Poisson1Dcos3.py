@@ -190,7 +190,7 @@ n      = 6
 maxits = [200,  300,  400,  500,  600,   1500 ]
 fctols = [1E-3, 1E-5, 1E-7, 1E-9, 1E-11, 1E-13]
 numlvl = 3
-USE_GLOBAL_MIN = True # False
+USE_GLOBAL_MIN = False # True # False
 numhop = 10
 
 # give an initial guess
@@ -247,8 +247,9 @@ print( format_err % (n, L2err(a,b,c,d), H1err(a,b,c,d)) )
 print( '--------------------------------------------------------------' )
 
 # tested SA in msa2
-# v0 =  np.ones(len(x0))
-# [sol,minres] = MomentSA2(F,JacF,0.1,100.0,0.1,x0,v0,100,5,[-1.0,1.0])
+#from msa2 import *
+#v0 =  np.ones(len(x0))
+#[sol,minres] = MomentSA2(F,JacF,0.1,1.0,0.1,x0,v0,100,50,[-1.0,1.0])
 
 # call a global minimizer to improve quality
 if USE_GLOBAL_MIN:

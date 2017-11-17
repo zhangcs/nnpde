@@ -217,12 +217,11 @@ time_start = time()
 
 K      = 10
 n      = 6
-#== Level  1     2     3     4     5      6  ==
-maxits = [200,  300,  400,  500,  600,   1500 ]
-fctols = [1E-3, 1E-5, 1E-7, 1E-9, 1E-11, 1E-13]
-numlvl = 4
-nit    = 10000
-numhop = 100
+#== Level   1      2      3      4      5      6  ==
+maxits = [10000, 10000, 10000, 15000, 20000, 30000]
+fctols = [1E-3,   1E-5,  1E-7,  1E-9, 1E-11, 1E-13]
+numlvl = 3
+numhop = 20
 USE_GLOBAL_MIN = True # False
 
 # give an initial guess
@@ -240,7 +239,7 @@ format_err = "n = %3d, L2err = %12.7e, H1err = %12.7e"
 # call a multi-level minimization process
 for l in range(numlvl-1):
     # call a minimizer to find a local min
-    opt = {'ftol':fctols[l], 'maxiter':maxits[l]}
+    nit = maxits[l]
     sol = GradientDescent(x0, nit)
     a   = sol[0:n]
     b   = sol[n:2*n]
@@ -263,7 +262,7 @@ for l in range(numlvl-1):
     n = n2
 
 # call a minimizer to find a local min on the finest level
-opt = {'ftol':fctols[numlvl-1], 'maxiter':maxits[numlvl-1]}
+nit = maxits[numlvl-1]
 sol = GradientDescent(x0, nit)
 a   = sol[0:n]
 b   = sol[n:2*n]
